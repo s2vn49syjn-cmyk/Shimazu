@@ -256,11 +256,36 @@ clearBtn.onclick = () => {
 document.getElementById('zin').onclick = () => { scale = Math.min(3, scale * 1.3); applyScale(); };
 document.getElementById('zout').onclick = () => { scale = Math.max(0.3, scale / 1.3); applyScale(); };
 document.getElementById('save').onclick = () => {
-  const a = document.createElement('a');
-  const d = new Date();
-  a.download = `狙い台_sakai_${d.getMonth()+1}-${d.getDate()}.png`;
-  a.href = cv.toDataURL('image/png');
-  a.click();
+  const url = cv.toDataURL('image/png');
+  let ov = document.getElementById('saveOverlay');
+  if (!ov) {
+    ov = document.createElement('div');
+    ov.id = 'saveOverlay';
+    ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;';
+    ov.innerHTML = `
+      <div style="color:#fff;font-size:14px;font-weight:700;margin-bottom:6px;text-align:center;">画像を長押しして「"写真"に保存」</div>
+      <div style="color:#8b93a3;font-size:11px;margin-bottom:14px;text-align:center;">または共有ボタンから保存できます</div>
+      <img id="saveImg" style="max-width:100%;max-height:70vh;border-radius:8px;border:1px solid #333;" />
+      <div style="display:flex;gap:10px;margin-top:16px;">
+        <button id="shareBtn" style="background:#27c2a0;color:#08231d;border:none;border-radius:10px;padding:12px 20px;font-size:14px;font-weight:700;">共有／保存</button>
+        <button id="closeOverlay" style="background:#333;color:#fff;border:none;border-radius:10px;padding:12px 20px;font-size:14px;font-weight:700;">閉じる</button>
+      </div>`;
+    document.body.appendChild(ov);
+    document.getElementById('closeOverlay').onclick = () => { ov.style.display = 'none'; };
+    document.getElementById('shareBtn').onclick = async () => {
+      try {
+        const blob = await (await fetch(document.getElementById('saveImg').src)).blob();
+        const file = new File([blob], 'nerai.png', { type: 'image/png' });
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          await navigator.share({ files: [file] });
+        } else {
+          window.open(document.getElementById('saveImg').src, '_blank');
+        }
+      } catch(e) {}
+    };
+  }
+  document.getElementById('saveImg').src = url;
+  ov.style.display = 'flex';
 };
 renderGroups();
 </script>
